@@ -8,8 +8,10 @@
 #define __CL_ENABLE_EXCEPTIONS
 #include <CL/cl.hpp>
 
-#include "../out.hpp"
-#include "../string.hpp"
+#include <mfl/out.hpp>
+#include <mfl/string.hpp>
+#include <mfl/exception.hpp>
+
 #include "program.hpp"
 
 namespace mfl {
@@ -26,7 +28,7 @@ namespace mfl {
 
       void releaseProgram(const std::string &name);
 
-      std::vector<::cl::CommandQueue> commandQueues(int deviceCount);
+      std::vector<::cl::CommandQueue> commandQueues(std::size_t deviceCount);
 
       void releaseQueues();
 

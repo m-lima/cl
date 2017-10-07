@@ -12,13 +12,13 @@ namespace mfl {
 
       virtual ~Program() = default;
 
-      const char *const buildString() const {
+      const char * buildString() const {
         return mBuildString.c_str();
       }
 
-      virtual const char *const path() const = 0;
+      virtual const char * path() const = 0;
 
-      virtual const char *const name() const = 0;
+      virtual const char * name() const = 0;
 
     private:
       const std::string mBuildString;

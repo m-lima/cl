@@ -1,9 +1,9 @@
-#include "runner.hpp"
+#include "include/mfl/cl/runner.hpp"
 
 #include <fstream>
 #include <numeric>
 
-#include "../exception.hpp"
+#include <mfl/exception.hpp>
 
 namespace mfl {
   namespace cl {
@@ -22,7 +22,7 @@ namespace mfl {
         std::vector<::cl::Device> platformDevices;
         size_t bestCount = 0;
         int bestIndex = 0;
-        for (int i = 0; i < platforms.size(); ++i) {
+        for (std::size_t i = 0; i < platforms.size(); ++i) {
           platforms[i].getDevices(type, &platformDevices);
           auto deviceCount = platformDevices.size();
 
@@ -185,7 +185,7 @@ namespace mfl {
       mPrograms.erase(name);
     }
 
-    std::vector<::cl::CommandQueue> Runner::commandQueues(int deviceCount) {
+    std::vector<::cl::CommandQueue> Runner::commandQueues(std::size_t deviceCount) {
       if (deviceCount <= 0) {
         return std::vector<::cl::CommandQueue>(0);
       }
