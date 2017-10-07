@@ -1,0 +1,12 @@
+# Vim
+**/.*.swp
+
+# Idea
+**/.idea
+
+# Build
+build
+cmake-build-debug
+
+# OpenCL
+include/CL
