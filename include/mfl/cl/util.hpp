@@ -3,27 +3,27 @@
 #define __CL_ENABLE_EXCEPTIONS
 #include <CL/cl.hpp>
 
-#include "../exception.hpp"
-#include "../string.hpp"
-#include "../out.hpp"
+#include <mfl/exception.hpp>
+#include <mfl/string.hpp>
+#include <mfl/out.hpp>
 
 namespace mfl {
   namespace cl {
     namespace util {
       /////////////////////////////////////
       // OpenCL Helper
-      inline std::vector<cl::Device> getGPUDevices() {
-        std::vector<cl::Device> devices;
+      inline std::vector<::cl::Device> getGPUDevices() {
+        std::vector<::cl::Device> devices;
 
-        std::vector<cl::Platform> platforms;
-        cl::Platform::get(&platforms);
+        std::vector<::cl::Platform> platforms;
+        ::cl::Platform::get(&platforms);
 
         if (platforms.empty()) {
           mfl::out::println(stderr, "OpenCL platforms not found");
           return devices;
         }
 
-        std::vector<cl::Device> platformDevices;
+        std::vector<::cl::Device> platformDevices;
         for (auto &platform : platforms) {
           try {
             platform.getDevices(CL_DEVICE_TYPE_GPU, &platformDevices);
@@ -49,23 +49,23 @@ namespace mfl {
       inline void printFull() {
         mfl::out::println("Listing all platforms and devices..");
         try {
-          std::vector<cl::Platform> platforms;
-          cl::Platform::get(&platforms);
+          std::vector<::cl::Platform> platforms;
+          ::cl::Platform::get(&platforms);
           std::string name;
 
           if (platforms.empty()) {
             throw mfl::Exception::build("OpenCL platforms not found.");
           }
 
-          cl::Context context;
-          std::vector<cl::Device> devices;
+          ::cl::Context context;
+          std::vector<::cl::Device> devices;
           for (auto platform = platforms.begin();
                platform != platforms.end();
                platform++) {
             name = platform->getInfo<CL_PLATFORM_NAME>();
             mfl::string::trimInPlace(name);
             mfl::out::println("{}", name);
-            std::vector<cl::Device> platformDevices;
+            std::vector<::cl::Device> platformDevices;
 
             try {
               platform->getDevices(CL_DEVICE_TYPE_ALL, &platformDevices);
@@ -82,14 +82,14 @@ namespace mfl {
             } catch (...) {
             }
           }
-        } catch (const cl::Error &err) {
+        } catch (const ::cl::Error &err) {
           throw mfl::Exception::build("OpenCL error: {} ({})",
                                       err.what(),
                                       err.err());
         }
       }
 
-      inline void printLongDeviceInfo(const cl::Device &device) {
+      inline void printLongDeviceInfo(const ::cl::Device &device) {
         mfl::out::println(
             "=========================|\n"
                 "Name:                     {}\n"

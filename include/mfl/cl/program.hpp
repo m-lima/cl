@@ -18,6 +18,10 @@ namespace mfl {
 
       virtual const char * path() const = 0;
 
+      virtual std::string getSource() const {
+        return "";
+      };
+
       virtual const char * name() const = 0;
 
     private:

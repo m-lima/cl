@@ -117,18 +117,8 @@ namespace mfl {
                                         "existing name");
       }
 
-      std::ifstream stream(program.path());
-
-      if (!stream.is_open()) {
-        throw mfl::Exception::build("Could not load program:\n{}",
-                                    program.path());
-      }
-
       try {
-        auto clProgram = ::cl::Program(
-            mContext,
-            std::string(std::istreambuf_iterator<char>(stream),
-                        std::istreambuf_iterator<char>()));
+        auto clProgram = ::cl::Program(mContext, program.getSource());
 
         mfl::out::println("Build log for {} ({})", program.name(), program.path());
 
@@ -177,8 +167,6 @@ namespace mfl {
                                     err.err(),
                                     getErrorString(err.err()));
       }
-
-      stream.close();
     }
 
     void Runner::releaseProgram(const std::string &name) {
