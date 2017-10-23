@@ -33,7 +33,8 @@ namespace mfl {
       void releaseQueues();
 
       ::cl::Kernel makeKernel(const std::string &program,
-                            const std::string &kernelName);
+                            const std::string &kernelName,
+                            bool verbose = false);
 
       template<typename ... T>
       ::cl::make_kernel<T...> makeKernelFunctor(const std::string &program,
