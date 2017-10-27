@@ -21,10 +21,11 @@ namespace mfl {
     public:
 
       Runner(cl_device_type type,
+             bool verbose = false,
              const std::vector<const char *> &requirements
              = std::vector<const char *>(0));
 
-      void loadProgram(const Program &program);
+      void loadProgram(const Program &program, bool verbose = false);
 
       void releaseProgram(const std::string &name);
 
@@ -125,9 +126,7 @@ namespace mfl {
                    device++) {
                 name = device->getInfo<CL_DEVICE_NAME>();
                 mfl::string::trimInPlace(name);
-                mfl::out::println(" {} {}",
-                                  '*',
-                                  name);
+                mfl::out::println(" * {}", name);
               }
             } catch (...) {
             }
