@@ -3,14 +3,12 @@
 #include <fstream>
 #include <numeric>
 
-#include <mfl/exception.hpp>
-
 namespace mfl {
   namespace cl {
 
     Runner::Runner(cl_device_type type,
                    bool verbose,
-                   const std::vector<const char *> &requirements) {
+                   const std::vector<const char *> & requirements) {
       try {
         std::vector<::cl::Platform> platforms;
         ::cl::Platform::get(&platforms);
@@ -33,7 +31,7 @@ namespace mfl {
           if (!requirements.empty()) {
             for (auto device : platformDevices) {
               std::string extensions = device.getInfo<CL_DEVICE_EXTENSIONS>();
-              for (const char *requirement : requirements) {
+              for (const char * requirement : requirements) {
                 if (extensions.find(requirement) == std::string::npos) {
                   deviceCount--;
                   break;
@@ -54,9 +52,9 @@ namespace mfl {
 
         if (verbose) {
           mfl::out::println("Chose {} with {} compatible device{}",
-              platforms[bestIndex].getInfo<CL_PLATFORM_NAME>(),
-              bestCount,
-              bestCount > 1 ? 's' : ' ');
+                            platforms[bestIndex].getInfo<CL_PLATFORM_NAME>(),
+                            bestCount,
+                            bestCount > 1 ? 's' : ' ');
         }
 
         mTotalMemory = SIZE_MAX;
@@ -81,7 +79,7 @@ namespace mfl {
           for (auto device : platformDevices) {
             std::string extensions = device.getInfo<CL_DEVICE_EXTENSIONS>();
             bool compatible = true;
-            for (const char *requirement : requirements) {
+            for (const char * requirement : requirements) {
               if (extensions.find(requirement) == std::string::npos) {
                 compatible = false;
                 break;
@@ -103,7 +101,7 @@ namespace mfl {
         }
 
         mContext = ::cl::Context(mDevices);
-      } catch (::cl::Error &err) {
+      } catch (::cl::Error & err) {
         throw mfl::Exception::build("OpenCL error: {} ({} : {})",
                                     err.what(),
                                     err.err(),
@@ -111,7 +109,7 @@ namespace mfl {
       }
     }
 
-    void Runner::loadProgram(const Program &program, bool verbose) {
+    void Runner::loadProgram(const Program & program, bool verbose) {
       if (mDevices.empty()) {
         throw mfl::Exception::build("Trying to load program without devices");
       }
@@ -155,7 +153,7 @@ namespace mfl {
 #endif
 
           mPrograms[program.name()] = std::move(clProgram);
-        } catch (::cl::Error &err) {
+        } catch (::cl::Error & err) {
           if (err.err() == CL_INVALID_PROGRAM_EXECUTABLE
               || err.err() == CL_BUILD_ERROR
               || err.err() == CL_BUILD_PROGRAM_FAILURE) {
@@ -170,7 +168,7 @@ namespace mfl {
                                       err.err(),
                                       getErrorString(err.err()));
         }
-      } catch (::cl::Error &err) {
+      } catch (::cl::Error & err) {
         throw mfl::Exception::build("OpenCL error: {} ({} : {})",
                                     err.what(),
                                     err.err(),
@@ -178,7 +176,7 @@ namespace mfl {
       }
     }
 
-    void Runner::releaseProgram(const std::string &name) {
+    void Runner::releaseProgram(const std::string & name) {
       mPrograms.erase(name);
     }
 
@@ -194,7 +192,7 @@ namespace mfl {
           for (size_t i = mCommands.size(); i < deviceCount; ++i) {
             mCommands.emplace_back(mContext, mDevices[i]);
           }
-        } catch (::cl::Error &err) {
+        } catch (::cl::Error & err) {
           throw mfl::Exception::build("OpenCL error: {} ({} : {})",
                                       err.what(),
                                       err.err(),
@@ -207,21 +205,21 @@ namespace mfl {
       }
 
       return std::vector<::cl::CommandQueue>(mCommands.cbegin(),
-                                           mCommands.cbegin() + deviceCount);
+                                             mCommands.cbegin() + deviceCount);
     }
 
     void Runner::releaseQueues() {
       mCommands = std::vector<::cl::CommandQueue>(0);
     }
 
-    ::cl::Kernel Runner::makeKernel(const std::string &program,
-        const std::string &kernelName,
-        bool verbose) {
+    ::cl::Kernel Runner::makeKernel(const std::string & program,
+                                    const std::string & kernelName,
+                                    bool verbose) {
 
       auto builtProgram = mPrograms.find(program);
       if (builtProgram == mPrograms.end()) {
         throw mfl::Exception::build("No program named {} has been loaded yet",
-            program);
+                                    program);
       }
 
       ::cl::Kernel kernel(builtProgram->second, kernelName.c_str());
@@ -230,34 +228,34 @@ namespace mfl {
         for (auto device : mDevices) {
           mfl::out::println("Kernel info for {}", device.getInfo<CL_DEVICE_NAME>());
           auto compileWorkGroupSize =
-            kernel.getWorkGroupInfo<CL_KERNEL_COMPILE_WORK_GROUP_SIZE>(device);
+              kernel.getWorkGroupInfo<CL_KERNEL_COMPILE_WORK_GROUP_SIZE>(device);
           mfl::out::println(" * Compile work group size:        {}, {}, {}",
-              compileWorkGroupSize[0],
-              compileWorkGroupSize[1],
-              compileWorkGroupSize[2]);
+                            compileWorkGroupSize[0],
+                            compileWorkGroupSize[1],
+                            compileWorkGroupSize[2]);
           size_t globalSize[3];
           clGetKernelWorkGroupInfo(kernel(),
-              device(),
-              CL_KERNEL_GLOBAL_WORK_SIZE,
-              sizeof(globalSize),
-              globalSize,
-              0);
+                                   device(),
+                                   CL_KERNEL_GLOBAL_WORK_SIZE,
+                                   sizeof(globalSize),
+                                   globalSize,
+                                   0);
           mfl::out::println(" * Global work size:               {}, {}, {}",
-              globalSize[0],
-              globalSize[1],
-              globalSize[2]);
+                            globalSize[0],
+                            globalSize[1],
+                            globalSize[2]);
           mfl::out::println(" * Local memory size:              {}B",
-              kernel.getWorkGroupInfo
-              <CL_KERNEL_LOCAL_MEM_SIZE>(device));
+                            kernel.getWorkGroupInfo
+                                <CL_KERNEL_LOCAL_MEM_SIZE>(device));
           mfl::out::println(" * Preferred group size multiple:  {}",
-              kernel.getWorkGroupInfo
-              <CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(device));
+                            kernel.getWorkGroupInfo
+                                <CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(device));
           mfl::out::println(" * Private memory size:            {}B",
-              kernel.getWorkGroupInfo
-              <CL_KERNEL_PRIVATE_MEM_SIZE>(device));
+                            kernel.getWorkGroupInfo
+                                <CL_KERNEL_PRIVATE_MEM_SIZE>(device));
           mfl::out::println(" * Work group size:                {}",
-              kernel.getWorkGroupInfo
-              <CL_KERNEL_WORK_GROUP_SIZE>(device));
+                            kernel.getWorkGroupInfo
+                                <CL_KERNEL_WORK_GROUP_SIZE>(device));
           mfl::out::println();
         }
       }
@@ -265,7 +263,7 @@ namespace mfl {
       return kernel;
     }
 
-    void Runner::releaseBuffer(const std::string &name) {
+    void Runner::releaseBuffer(const std::string & name) {
       mBuffers.erase(name);
     }
 

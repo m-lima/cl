@@ -7,7 +7,7 @@ namespace mfl {
 
     class Program {
     public:
-      Program(const std::string &buildString) :
+      Program(const std::string & buildString) :
           mBuildString(buildString) {};
 
       virtual ~Program() = default;
