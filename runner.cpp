@@ -141,7 +141,7 @@ namespace mfl {
           auto assembly = clProgram.getInfo<CL_PROGRAM_BINARIES>();
           mfl::out::println("== Assembly:");
           for (auto line : assembly) {
-            println("{}", line);
+            mfl::out::println("{}", line);
           }
 #endif
 
