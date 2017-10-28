@@ -9,6 +9,7 @@ namespace mfl {
   namespace cl {
 
     Runner::Runner(cl_device_type type,
+                   bool verbose,
                    const std::vector<const char *> &requirements) {
       try {
         std::vector<::cl::Platform> platforms;
@@ -18,7 +19,10 @@ namespace mfl {
           throw mfl::Exception::build("OpenCL platforms not found");
         }
 
-        mfl::out::println("Detecting best platform..");
+        if (verbose) {
+          mfl::out::println("Detecting best platform..");
+        }
+
         std::vector<::cl::Device> platformDevices;
         size_t bestCount = 0;
         int bestIndex = 0;
@@ -48,10 +52,12 @@ namespace mfl {
           throw mfl::Exception::build("No compatible OpenCL device found");
         }
 
-        mfl::out::println("Chose {} with {} compatible device{}",
-                          platforms[bestIndex].getInfo<CL_PLATFORM_NAME>(),
-                          bestCount,
-                          bestCount > 1 ? 's' : ' ');
+        if (verbose) {
+          mfl::out::println("Chose {} with {} compatible device{}",
+              platforms[bestIndex].getInfo<CL_PLATFORM_NAME>(),
+              bestCount,
+              bestCount > 1 ? 's' : ' ');
+        }
 
         mTotalMemory = SIZE_MAX;
         mBufferMemory = SIZE_MAX;
@@ -103,11 +109,9 @@ namespace mfl {
                                     err.err(),
                                     getErrorString(err.err()));
       }
-
-      mfl::out::println();
     }
 
-    void Runner::loadProgram(const Program &program) {
+    void Runner::loadProgram(const Program &program, bool verbose) {
       if (mDevices.empty()) {
         throw mfl::Exception::build("Trying to load program without devices");
       }
@@ -120,11 +124,16 @@ namespace mfl {
       try {
         auto clProgram = ::cl::Program(mContext, program.getSource());
 
-        mfl::out::println("Build log for {} ({})", program.name(), program.path());
+        bool titleShown = false;
 
         for (auto device : mDevices) {
           auto buildInfo = clProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
-          if (buildInfo.size() > 1) {
+          if (verbose && buildInfo.size() > 1) {
+            if (!titleShown) {
+              mfl::out::println("Build log for {} ({})", program.name(), program.path());
+              titleShown = true;
+            }
+
             mfl::out::println("== Device {}:\n"
                                   "{}\n"
                                   "=========",
@@ -132,13 +141,13 @@ namespace mfl {
                               buildInfo);
           }
         }
-        mfl::out::println();
 
         try {
           clProgram.build(mDevices, program.buildString());
 
 #if defined(DEBUG) || defined(_DEBUG)
           auto assembly = clProgram.getInfo<CL_PROGRAM_BINARIES>();
+          mfl::out::println();
           mfl::out::println("== Assembly:");
           for (auto line : assembly) {
             mfl::out::println("{}", line);
@@ -206,48 +215,51 @@ namespace mfl {
     }
 
     ::cl::Kernel Runner::makeKernel(const std::string &program,
-                                  const std::string &kernelName) {
+        const std::string &kernelName,
+        bool verbose) {
 
       auto builtProgram = mPrograms.find(program);
       if (builtProgram == mPrograms.end()) {
         throw mfl::Exception::build("No program named {} has been loaded yet",
-                                    program);
+            program);
       }
 
       ::cl::Kernel kernel(builtProgram->second, kernelName.c_str());
 
-      for (auto device : mDevices) {
-        mfl::out::println("Kernel info for {}", device.getInfo<CL_DEVICE_NAME>());
-        auto compileWorkGroupSize =
+      if (verbose) {
+        for (auto device : mDevices) {
+          mfl::out::println("Kernel info for {}", device.getInfo<CL_DEVICE_NAME>());
+          auto compileWorkGroupSize =
             kernel.getWorkGroupInfo<CL_KERNEL_COMPILE_WORK_GROUP_SIZE>(device);
-        mfl::out::println(" * Compile work group size:        {}, {}, {}",
-                          compileWorkGroupSize[0],
-                          compileWorkGroupSize[1],
-                          compileWorkGroupSize[2]);
-        size_t globalSize[3];
-        clGetKernelWorkGroupInfo(kernel(),
-                                 device(),
-                                 CL_KERNEL_GLOBAL_WORK_SIZE,
-                                 sizeof(globalSize),
-                                 globalSize,
-                                 0);
-        mfl::out::println(" * Global work size:               {}, {}, {}",
-                          globalSize[0],
-                          globalSize[1],
-                          globalSize[2]);
-        mfl::out::println(" * Local memory size:              {}B",
-                          kernel.getWorkGroupInfo
-                              <CL_KERNEL_LOCAL_MEM_SIZE>(device));
-        mfl::out::println(" * Preferred group size multiple:  {}",
-                          kernel.getWorkGroupInfo
-                              <CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(device));
-        mfl::out::println(" * Private memory size:            {}B",
-                          kernel.getWorkGroupInfo
-                              <CL_KERNEL_PRIVATE_MEM_SIZE>(device));
-        mfl::out::println(" * Work group size:                {}",
-                          kernel.getWorkGroupInfo
-                              <CL_KERNEL_WORK_GROUP_SIZE>(device));
-        mfl::out::println();
+          mfl::out::println(" * Compile work group size:        {}, {}, {}",
+              compileWorkGroupSize[0],
+              compileWorkGroupSize[1],
+              compileWorkGroupSize[2]);
+          size_t globalSize[3];
+          clGetKernelWorkGroupInfo(kernel(),
+              device(),
+              CL_KERNEL_GLOBAL_WORK_SIZE,
+              sizeof(globalSize),
+              globalSize,
+              0);
+          mfl::out::println(" * Global work size:               {}, {}, {}",
+              globalSize[0],
+              globalSize[1],
+              globalSize[2]);
+          mfl::out::println(" * Local memory size:              {}B",
+              kernel.getWorkGroupInfo
+              <CL_KERNEL_LOCAL_MEM_SIZE>(device));
+          mfl::out::println(" * Preferred group size multiple:  {}",
+              kernel.getWorkGroupInfo
+              <CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(device));
+          mfl::out::println(" * Private memory size:            {}B",
+              kernel.getWorkGroupInfo
+              <CL_KERNEL_PRIVATE_MEM_SIZE>(device));
+          mfl::out::println(" * Work group size:                {}",
+              kernel.getWorkGroupInfo
+              <CL_KERNEL_WORK_GROUP_SIZE>(device));
+          mfl::out::println();
+        }
       }
 
       return kernel;
