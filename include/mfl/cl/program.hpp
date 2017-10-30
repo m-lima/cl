@@ -18,7 +18,7 @@ namespace mfl {
 
       virtual const char * path() const = 0;
 
-      virtual std::string getSource() const {
+      virtual const std::string getSource() const {
         return "";
       };
 
